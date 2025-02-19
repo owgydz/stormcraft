@@ -6,7 +6,8 @@ import {
 	grassImg,
 	glassImg,
 	woodImg
-} from './images'
+	
+} from './Images'
 
 const dirtTexture = new TextureLoader().load(dirtImg)
 const logTexture = new TextureLoader().load(logImg)
