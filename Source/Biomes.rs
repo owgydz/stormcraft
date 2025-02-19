@@ -1,10 +1,10 @@
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BiomeType {
-    Plains,
+    Grassland,
     Desert,
     Forest,
     Mountain,
-    Water, // What?
+    Water, // What
 }
 
 impl BiomeType {
@@ -12,7 +12,7 @@ impl BiomeType {
         match self {
             BiomeType::Grassland => if y == 0 { BlockType::Grass } else { BlockType::Dirt },
             BiomeType::Desert => if y == 0 { BlockType::Sand } else { BlockType::Dirt },
-            BiomeType::Forest => if y == 0 { BlockType::Grass } else { BlockType::Dirt },
+            BiomeType::Forest => if y == 0 { BlockType::Wood } else { BlockType::Dirt },
             BiomeType::Mountain => if y == 0 { BlockType::Stone } else { BlockType::Dirt },
             BiomeType::Water => if y == 0 { BlockType::Water } else { BlockType::Air },
         }
