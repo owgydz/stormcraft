@@ -5,12 +5,16 @@ pub enum BlockType {
     Dirt,
     Stone,
     Water,
-    Wood, 
-    Leaves,
     Sand,
-    Glass,
+    Clay,
+    Coal,
+    Iron,
+    Gold, // WOAH! 
+    Diamond, // WOAHHHH!
+    Wood,
+    Leaves,
 }
-// What a basic list of blocks. We'll update them.
+
 
 impl BlockType {
     pub fn is_solid(&self) -> bool {
