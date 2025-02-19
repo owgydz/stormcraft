@@ -1,0 +1,5 @@
+[dependencies]
+bevy = "0.13"
+bevy_voxels = "0.3"
+rand = "0.8"
+noise = "0.8"  
