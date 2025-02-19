@@ -2,8 +2,8 @@
 
 import { useBox } from "@react-three/cannon"
 import { useState } from "react"
-import { useStore } from "../hooks/useStore"
-import * as textures from "../Assets/textures"
+import { useStore } from "../Hooks/useStore"
+import * as textures from "../Assets/Textures"
 
 
 export const Cube = ({ position, texture }) => {

@@ -1,12 +1,12 @@
 import { Physics } from '@react-three/cannon';
 import { Sky } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { Ground } from './components/Ground'
-import { Player } from './components/Player'
-import { FPV } from './components/FPV'
-import { Cubes } from './components/Cubes'
-import { TextureSelector } from './components/TextureSelector';
-import { Menu } from './components/Menu';
+import { Ground } from './Core/Ground'
+import { Player } from './Core/Player'
+import { FPV } from './Core/FPV'
+import { Cubes } from './Core/Cubes'
+import { TextureSelector } from './Core/Texsel';
+import { Menu } from './Core/Menu';
 
 function App() {
   return (
