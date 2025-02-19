@@ -27,7 +27,7 @@ fn setup_world(mut commands: Commands) {
                 (1, 0) => BiomeType::Desert,
                 (0, 1) => BiomeType::Forest,
                 (1, 1) => BiomeType::Mountain,
-                _ => BiomeType::Water,
+                _ => BiomeType::Water, // Bro it's called an Ocean
             };
 
             for y in 0..32 {
@@ -47,3 +47,4 @@ fn setup_world(mut commands: Commands) {
         Transform::default(),
     ));
 }
+
