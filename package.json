@@ -1,6 +1,6 @@
 {
   "name": "Stormcraft",
-  "version": "0.7.5",
+  "version": "0.85",
   "private": true,
   "dependencies": {
     "@react-three/cannon": "^3.1.2",
