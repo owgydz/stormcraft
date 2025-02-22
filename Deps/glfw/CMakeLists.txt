@@ -1,6 +1,6 @@
 project(GLFW C)
 
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.22.1)
 
 if (NOT CMAKE_VERSION VERSION_LESS "3.0")
     # Until all major package systems have moved to CMake 3,
