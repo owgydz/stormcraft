@@ -20,6 +20,7 @@
 #include "world.h"
 #include "tools.h"
 #include "itmm.h"
+#include "..\Deps\curl\include\curl\curl.h"
 #include "player.h"
 
 #define MAX_CHUNKS 8192
@@ -100,6 +101,7 @@ typedef struct {
     State state1;
     State state2;
     GLuint buffer;
+    int inventory[35]; 
 } Player;
 
 typedef struct {
@@ -2661,7 +2663,7 @@ void load_textures() {
 
     // Bind textures to appropriate texture units
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, block_textures[BLOCK_STONE]);
+    glBindTexture(GL_TEXTURE_2D, block_textures[STONE]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, font_texture);
     glActiveTexture(GL_TEXTURE2);
@@ -2742,7 +2744,6 @@ int main(int argc, char **argv) {
     text_attrib.matrix = glGetUniformLocation(program, "matrix");
     text_attrib.sampler = glGetUniformLocation(program, "sampler");
     text_attrib.extra1 = glGetUniformLocation(program, "is_sign");
-
     program = load_program(
         "shaders/sky_vertex.glsl", "shaders/sky_fragment.glsl");
     sky_attrib.program = program;
@@ -2751,6 +2752,17 @@ int main(int argc, char **argv) {
     sky_attrib.uv = glGetAttribLocation(program, "uv");
     sky_attrib.matrix = glGetUniformLocation(program, "matrix");
     sky_attrib.sampler = glGetUniformLocation(program, "sampler");
+    sky_attrib.timer = glGetUniformLocation(program, "timer");
+
+    // Initialize text_attrib
+    program = load_program(
+        "shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
+    text_attrib.program = program;
+    text_attrib.position = glGetAttribLocation(program, "position");
+    text_attrib.uv = glGetAttribLocation(program, "uv");
+    text_attrib.matrix = glGetUniformLocation(program, "matrix");
+    text_attrib.sampler = glGetUniformLocation(program, "sampler");
+    text_attrib.extra1 = glGetUniformLocation(program, "is_sign");
     sky_attrib.timer = glGetUniformLocation(program, "timer");
 
     // CHECK COMMAND LINE ARGUMENTS //
@@ -2827,8 +2839,6 @@ int main(int argc, char **argv) {
         // BEGIN MAIN LOOP //
         double previous = glfwGetTime();
         init_sdl();
-        Mix_Music *music = load_music("AssetsNT/song1.ogg");
-        play_music(music);
         while (1) {
             // WINDOW SIZE AND SCALE //
             g->scale = get_scale_factor();
@@ -3006,7 +3016,6 @@ int main(int argc, char **argv) {
         del_buffer(sky_buffer);
         delete_all_chunks();
         delete_all_players();
-        Mix_FreeMusic(music);
         cleanup_sdl();
     }
 
