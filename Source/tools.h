@@ -1,3 +1,6 @@
+//
+//
+// 
 #ifndef TOOLS_H
 #define TOOLS_H
 
@@ -15,6 +18,7 @@
 #define AXE_PLAYER_DAMAGE     6
 
 #define DEFAULT_TOOL_DAMAGE   2
+
 
 void use_tool(int tool_type, int x, int y, int z);
 
