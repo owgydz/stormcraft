@@ -20,8 +20,8 @@
 #include "world.h"
 #include "tools.h"
 #include "itmm.h"
-#include "..\Deps\curl\include\curl\curl.h"
-#include "player.h"
+#include "block.h"
+#include "../Deps/curl/include/curl/curl.h"
 
 #define MAX_CHUNKS 8192
 #define MAX_PLAYERS 128
@@ -101,7 +101,6 @@ typedef struct {
     State state1;
     State state2;
     GLuint buffer;
-    int inventory[35]; 
 } Player;
 
 typedef struct {
@@ -1805,26 +1804,6 @@ void render_text(
     del_buffer(buffer);
 }
 
-void render_inventory(Attrib *attrib, Player *player) {
-    float matrix[16];
-    set_matrix_2d(matrix, g->width, g->height);
-    glUseProgram(attrib->program);
-    glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);
-    glUniform1i(attrib->sampler, 1);
-    glUniform1i(attrib->extra1, 0);
-
-    float ts = 12 * g->scale;
-    float tx = ts / 2;
-    float ty = g->height - ts;
-
-    for (int i = 0; i < 35; i++) {
-        char item_text[32];
-        snprintf(item_text, sizeof(item_text), "Slot %d: %d", i + 1, player->inventory[i]);
-        render_text(attrib, ALIGN_LEFT, tx, ty, ts, item_text);
-        ty -= ts * 2;
-    }
-}
-
 void add_message(const char *text) {
     printf("%s\n", text);
     snprintf(
@@ -2198,7 +2177,13 @@ void on_middle_click() {
     }
 }
 
+
 void on_key(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    typedef struct {
+        int font_size;        
+        float color[3];       
+    } TextAttrib;    
+    // todo: fix rgb vals
     int control = mods & (GLFW_MOD_CONTROL | GLFW_MOD_SUPER);
     int exclusive =
         glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
@@ -2296,10 +2281,18 @@ void on_key(GLFWwindow *window, int key, int scancode, int action, int mods) {
             g->observe2 = (g->observe2 + 1) % g->player_count;
         }
         if (key == GLFW_KEY_I) {
+            TextAttrib text_attrib;
+            text_attrib.font_size = 12; // Example font size
+            text_attrib.color[0] = 1.0f; // Red
+            text_attrib.color[1] = 1.0f; // Green
+            text_attrib.color[2] = 1.0f; // Blue
+
+            // Call render_inventory with text_attrib
             render_inventory(&text_attrib, g->players);
         }
     }
 }
+
 
 void on_char(GLFWwindow *window, unsigned int u) {
     if (g->suppress_char) {
