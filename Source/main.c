@@ -1,5 +1,8 @@
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <curl/curl.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,10 +21,6 @@
 #include "tinycthread.h"
 #include "util.h"
 #include "world.h"
-#include "tools.h"
-#include "itmm.h"
-#include "block.h"
-#include "../Deps/curl/include/curl/curl.h"
 
 #define MAX_CHUNKS 8192
 #define MAX_PLAYERS 128
@@ -2027,6 +2026,8 @@ void parse_command(const char *buffer, int forward) {
     char server_addr[MAX_ADDR_LENGTH];
     int server_port = DEFAULT_PORT;
     char filename[MAX_PATH_LENGTH];
+    double elapsed;
+
     int radius, count, xc, yc, zc;
     if (sscanf(buffer, "/identity %128s %128s", username, token) == 2) {
         db_auth_set(username, token);
@@ -2075,6 +2076,16 @@ void parse_command(const char *buffer, int forward) {
             add_message("Viewing distance must be between 1 and 24.");
         }
     }
+    else if (sscanf(buffer, "/settime %lf", &elapsed) == 1) {
+        if (elapsed >= 0.0) {
+            glfwSetTime(fmod(elapsed, g->day_length)); 
+            g->time_changed = 1;  
+            add_message("Time set successfully.");
+        } else {
+            add_message("Invalid time value. The time cannot be negative.");
+        }
+    }
+    
     else if (strcmp(buffer, "/copy") == 0) {
         copy();
     }
@@ -2177,13 +2188,7 @@ void on_middle_click() {
     }
 }
 
-
 void on_key(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    typedef struct {
-        int font_size;        
-        float color[3];       
-    } TextAttrib;    
-    // todo: fix rgb vals
     int control = mods & (GLFW_MOD_CONTROL | GLFW_MOD_SUPER);
     int exclusive =
         glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
@@ -2280,19 +2285,8 @@ void on_key(GLFWwindow *window, int key, int scancode, int action, int mods) {
         if (key == CRAFT_KEY_OBSERVE_INSET) {
             g->observe2 = (g->observe2 + 1) % g->player_count;
         }
-        if (key == GLFW_KEY_I) {
-            TextAttrib text_attrib;
-            text_attrib.font_size = 12; // Example font size
-            text_attrib.color[0] = 1.0f; // Red
-            text_attrib.color[1] = 1.0f; // Green
-            text_attrib.color[2] = 1.0f; // Blue
-
-            // Call render_inventory with text_attrib
-            render_inventory(&text_attrib, g->players);
-        }
     }
 }
-
 
 void on_char(GLFWwindow *window, unsigned int u) {
     if (g->suppress_char) {
@@ -2346,7 +2340,7 @@ void on_scroll(GLFWwindow *window, double xdelta, double ydelta) {
 void on_mouse_button(GLFWwindow *window, int button, int action, int mods) {
     int control = mods & (GLFW_MOD_CONTROL | GLFW_MOD_SUPER);
     int exclusive =
-        glfwGetInputMode(g->window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
+        glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
     if (action != GLFW_PRESS) {
         return;
     }
@@ -2392,7 +2386,7 @@ void create_window() {
         window_height = modes[mode_count - 1].height;
     }
     g->window = glfwCreateWindow(
-        window_width, window_height, "Craft", monitor, NULL);
+        window_width, window_height, "Stormcraft v1.10", monitor, NULL);
 }
 
 void handle_mouse_input() {
@@ -2603,70 +2597,45 @@ void reset_model() {
     g->time_changed = 1;
 }
 
-GLuint load_texture(const char *path) {
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    load_png_texture(path);
-    return texture;
+void init_audio() {
+    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+        fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    if (Mix_Init(MIX_INIT_MP3) != MIX_INIT_MP3) {
+        fprintf(stderr, "Mix_Init failed: %s\n", Mix_GetError());
+        exit(1);
+    }
+
+    if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) < 0) {
+        fprintf(stderr, "Mix_OpenAudio failed: %s\n", Mix_GetError());
+        exit(1);
+    }
 }
 
-void load_textures() {
-    // blocks
-    GLuint block_textures[256];
-    block_textures[GRASS] = load_texture("textures/blocks/grass.jpg");
-    block_textures[WOOD] = load_texture("textures/blocks/wood.jpg");
-    block_textures[BRICK] = load_texture("textures/blocks/brick.jpg");
-    block_textures[CEMENT] = load_texture("textures/blocks/cement.jpg");
-    block_textures[DIRT] = load_texture("textures/blocks/dirt.jpg");
-    block_textures[PLANK] = load_texture("textures/blocks/pla.jpg");
-    block_textures[SNOW] = load_texture("textures/blocks/snow.jpg");
-    block_textures[GLASS] = load_texture("textures/blocks/glass.jpg");
-    block_textures[COBBLE] = load_texture("textures/blocks/cstone.jpg");
-    block_textures[LIGHT_STONE] = load_texture("textures/blocks/lstone.jpg");
-    block_textures[DARK_STONE] = load_texture("textures/blocks/dstone.jpg");
-    block_textures[CHEST] = load_texture("textures/blocks/chest.jpg");
-    block_textures[LEAVES] = load_texture("textures/blocks/leaves.jpg");
-    block_textures[CLOUD] = load_texture("textures/blocks/cloud.jpg");
-    block_textures[TALL_GRASS] = load_texture("textures/blocks/tgrass.jpg");
-    block_textures[RED_FLOWER] = load_texture("textures/blocks/rflo.jpg");
-    block_textures[PURPLE_FLOWER] = load_texture("textures/blocks/pflo.jpg");
-    block_textures[PINK_FLOWER] = load_texture("textures/blocks/piflo.jpg");
-    block_textures[SUN_FLOWER] = load_texture("textures/blocks/sflo.jpg");
-    block_textures[WHITE_FLOWER] = load_texture("textures/blocks/wflo.jpg");
-    block_textures[BLUE_FLOWER] = load_texture("textures/blocks/bflo.jpg");
-    block_textures[ORANGE_FLOWER] = load_texture("textures/blocks/oflo.jpg");
-    block_textures[IRON_ORE] = load_texture("textures/blocks/iore.jpg");
-    block_textures[GOLD_ORE] = load_texture("textures/blocks/gore.jpg");
-    block_textures[DIA_ORE] = load_texture("textures/blocks/diamond.jpg");
+void play_background_music(const char *filename) {
+    Mix_Music *bgMusic = Mix_LoadMUS(filename);
+    if (!bgMusic) {
+        fprintf(stderr, "Mix_LoadMUS failed: %s\n", Mix_GetError());
+        exit(1);
+    }
 
+    if (Mix_PlayMusic(bgMusic, -1) == -1) {
+        fprintf(stderr, "Mix_PlayMusic failed: %s\n", Mix_GetError());
+        exit(1);
+    }
+}
 
-    // items
-    GLuint item_textures[256];
-    item_textures[TOOL_PICKAXE] = load_texture("textures/tools/pickaxe.png");
-    item_textures[TOOL_SHOVEL] = load_texture("textures/tools/shovel.png");
-    item_textures[TOOL_AXE] = load_texture("textures/tools/axe.png");
-
-    // misc
-    GLuint font_texture = load_texture("textures/font.png");
-    GLuint sky_texture = load_texture("textures/sky.png");
-    GLuint sign_texture = load_texture("textures/sign.png");
-
-    // Bind textures to appropriate texture units
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, block_textures[STONE]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, font_texture);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, sky_texture);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, sign_texture);
+void cleanup_audio() {
+    Mix_CloseAudio();
+    SDL_Quit();
 }
 
 int main(int argc, char **argv) {
-    // INITIALIZATION //
+    // INITIALIZATION // 
+    init_audio();
+    play_background_music("AssetsNT/Music/Key.mp3");
     curl_global_init(CURL_GLOBAL_DEFAULT);
     srand(time(NULL));
     rand();
@@ -2699,7 +2668,39 @@ int main(int argc, char **argv) {
     glClearColor(0, 0, 0, 1);
 
     // LOAD TEXTURES //
-    load_textures();
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    load_png_texture("textures/texture.png");
+
+    GLuint font;
+    glGenTextures(1, &font);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, font);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    load_png_texture("textures/font.png");
+
+    GLuint sky;
+    glGenTextures(1, &sky);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, sky);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    load_png_texture("textures/sky.png");
+
+    GLuint sign;
+    glGenTextures(1, &sign);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, sign);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    load_png_texture("textures/sign.png");
 
     // LOAD SHADERS //
     Attrib block_attrib = {0};
@@ -2737,6 +2738,7 @@ int main(int argc, char **argv) {
     text_attrib.matrix = glGetUniformLocation(program, "matrix");
     text_attrib.sampler = glGetUniformLocation(program, "sampler");
     text_attrib.extra1 = glGetUniformLocation(program, "is_sign");
+
     program = load_program(
         "shaders/sky_vertex.glsl", "shaders/sky_fragment.glsl");
     sky_attrib.program = program;
@@ -2745,17 +2747,6 @@ int main(int argc, char **argv) {
     sky_attrib.uv = glGetAttribLocation(program, "uv");
     sky_attrib.matrix = glGetUniformLocation(program, "matrix");
     sky_attrib.sampler = glGetUniformLocation(program, "sampler");
-    sky_attrib.timer = glGetUniformLocation(program, "timer");
-
-    // Initialize text_attrib
-    program = load_program(
-        "shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
-    text_attrib.program = program;
-    text_attrib.position = glGetAttribLocation(program, "position");
-    text_attrib.uv = glGetAttribLocation(program, "uv");
-    text_attrib.matrix = glGetUniformLocation(program, "matrix");
-    text_attrib.sampler = glGetUniformLocation(program, "sampler");
-    text_attrib.extra1 = glGetUniformLocation(program, "is_sign");
     sky_attrib.timer = glGetUniformLocation(program, "timer");
 
     // CHECK COMMAND LINE ARGUMENTS //
@@ -2771,11 +2762,12 @@ int main(int argc, char **argv) {
         snprintf(g->db_path, MAX_PATH_LENGTH, "%s", DB_PATH);
     }
 
-    // INITIALIZE WORKER THREADS //
     g->create_radius = CREATE_CHUNK_RADIUS;
     g->render_radius = RENDER_CHUNK_RADIUS;
     g->delete_radius = DELETE_CHUNK_RADIUS;
     g->sign_radius = RENDER_SIGN_RADIUS;
+
+    // INITIALIZE WORKER THREADS
     for (int i = 0; i < WORKERS; i++) {
         Worker *worker = g->workers + i;
         worker->index = i;
@@ -2816,13 +2808,14 @@ int main(int argc, char **argv) {
         double last_update = glfwGetTime();
         GLuint sky_buffer = gen_sky_buffer();
 
-        // LOAD STATE FROM DATABASE //
         Player *me = g->players;
         State *s = &g->players->state;
         me->id = 0;
         me->name[0] = '\0';
         me->buffer = 0;
         g->player_count = 1;
+
+        // LOAD STATE FROM DATABASE //
         int loaded = db_load_state(&s->x, &s->y, &s->z, &s->rx, &s->ry);
         force_chunks(me);
         if (!loaded) {
@@ -2831,7 +2824,6 @@ int main(int argc, char **argv) {
 
         // BEGIN MAIN LOOP //
         double previous = glfwGetTime();
-        init_sdl();
         while (1) {
             // WINDOW SIZE AND SCALE //
             g->scale = get_scale_factor();
@@ -2839,18 +2831,18 @@ int main(int argc, char **argv) {
             glViewport(0, 0, g->width, g->height);
 
             // FRAME RATE //
-            update_fps(&fps);
-            double now = glfwGetTime();
-            double dt = now - previous;
-            dt = MIN(dt, 0.2);
-            dt = MAX(dt, 0.0);
-            previous = now;
             if (g->time_changed) {
                 g->time_changed = 0;
                 last_commit = glfwGetTime();
                 last_update = glfwGetTime();
                 memset(&fps, 0, sizeof(fps));
             }
+            update_fps(&fps);
+            double now = glfwGetTime();
+            double dt = now - previous;
+            dt = MIN(dt, 0.2);
+            dt = MAX(dt, 0.0);
+            previous = now;
 
             // HANDLE MOUSE INPUT //
             handle_mouse_input();
@@ -2960,21 +2952,26 @@ int main(int argc, char **argv) {
             // RENDER PICTURE IN PICTURE //
             if (g->observe2) {
                 player = g->players + g->observe2;
-                glEnable(GL_SCISSOR_TEST);
+
                 int pw = 256 * g->scale;
                 int ph = 256 * g->scale;
                 int offset = 32 * g->scale;
                 int pad = 3 * g->scale;
                 int sw = pw + pad * 2;
                 int sh = ph + pad * 2;
+
+                glEnable(GL_SCISSOR_TEST);
                 glScissor(g->width - sw - offset + pad, offset - pad, sw, sh);
                 glClear(GL_COLOR_BUFFER_BIT);
                 glDisable(GL_SCISSOR_TEST);
+                glClear(GL_DEPTH_BUFFER_BIT);
                 glViewport(g->width - pw - offset, offset, pw, ph);
+
                 g->width = pw;
                 g->height = ph;
                 g->ortho = 0;
                 g->fov = 65;
+
                 render_sky(&sky_attrib, player, sky_buffer);
                 glClear(GL_DEPTH_BUFFER_BIT);
                 render_chunks(&block_attrib, player);
@@ -3009,7 +3006,6 @@ int main(int argc, char **argv) {
         del_buffer(sky_buffer);
         delete_all_chunks();
         delete_all_players();
-        cleanup_sdl();
     }
 
     glfwTerminate();

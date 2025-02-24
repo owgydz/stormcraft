@@ -3,7 +3,6 @@
 
 const int items[] = {
     // items the user can build
-    // blocks
     GRASS,
     SAND,
     STONE,
@@ -26,12 +25,44 @@ const int items[] = {
     SUN_FLOWER,
     WHITE_FLOWER,
     BLUE_FLOWER,
-    ORANGE_FLOWER,
-    PINK_FLOWER,
-    CYAN_FLOWER,
     IRON_ORE,
     GOLD_ORE,
-    DIA_ORE,
+    COPPER_ORE,
+    SILVER_ORE,
+    DIAMOND_ORE,
+    // colors
+    COLOR_00,
+    COLOR_01,
+    COLOR_02,
+    COLOR_03,
+    COLOR_04,
+    COLOR_05,
+    COLOR_06,
+    COLOR_07,
+    COLOR_08,
+    COLOR_09,
+    COLOR_10,
+    COLOR_11,
+    COLOR_12,
+    COLOR_13,
+    COLOR_14,
+    COLOR_15,
+    COLOR_16,
+    COLOR_17,
+    COLOR_18,
+    COLOR_19,
+    COLOR_20,
+    COLOR_21,
+    COLOR_22,
+    COLOR_23,
+    COLOR_24,
+    COLOR_25,
+    COLOR_26,
+    COLOR_27,
+    COLOR_28,
+    COLOR_29,
+    COLOR_30,
+    COLOR_31
 };
 
 const int item_count = sizeof(items) / sizeof(int);
