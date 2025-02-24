@@ -1,5 +1,5 @@
 
-# Stormcraft.
+# Stormcraft
 Stormcraft is a tiny Minecraft clone based off of the GitHub repository here:
 https://github.com/jdah/minecraft-weekend
 
