@@ -16,7 +16,7 @@ DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 4080
 
 DB_PATH = 'craft.db'
-LOG_PATH = 'log.txt'
+LOG_PATH = 'log_str.txt'
 
 CHUNK_SIZE = 32
 BUFFER_SIZE = 4096
