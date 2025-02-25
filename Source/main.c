@@ -2023,6 +2023,7 @@ void tree(Block *block) {
 void parse_command(const char *buffer, int forward) {
     char username[128] = {0};
     char token[128] = {0};
+    char current = 1.133;
     char server_addr[MAX_ADDR_LENGTH];
     int server_port = DEFAULT_PORT;
     char filename[MAX_PATH_LENGTH];
@@ -2085,8 +2086,13 @@ void parse_command(const char *buffer, int forward) {
             add_message("Invalid time value. The time cannot be negative.");
         }
     }
-    
-    else if (strcmp(buffer, "/copy") == 0) {
+    else if (sscanf(buffer, "/version", &current == 1)) {
+        if (current >= 1.132)
+            add_message("Build number: 2025.24.2.068.95. Current version is v1.1.32, codename Sketchy Slopes.");
+    } else {
+	add_message("Build number: 2025.24.2.068.95. Current version is v1.1.32, codename Sketchy Slopes.");
+    }
+    if (strcmp(buffer, "/copy") == 0) {
         copy();
     }
     else if (strcmp(buffer, "/paste") == 0) {
@@ -2386,7 +2392,7 @@ void create_window() {
         window_height = modes[mode_count - 1].height;
     }
     g->window = glfwCreateWindow(
-        window_width, window_height, "Stormcraft v1.10", monitor, NULL);
+        window_width, window_height, "Stormcraft v1.1.32", monitor, NULL);
 }
 
 void handle_mouse_input() {
