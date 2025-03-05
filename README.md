@@ -9,8 +9,7 @@ That's it.
 
 Thanks to the Github user Fogleman for the original source code.
 
-Music by [Aaron Cherof] (https://www.cherof.com/) 
-
+Music by
 C418 (https://c418.org/)
 
 *Releases:*
