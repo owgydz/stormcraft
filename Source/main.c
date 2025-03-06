@@ -2023,6 +2023,7 @@ void tree(Block *block) {
 void parse_command(const char *buffer, int forward) {
     char username[128] = {0};
     char token[128] = {0};
+    char current = 1.133;
     char server_addr[MAX_ADDR_LENGTH];
     int server_port = DEFAULT_PORT;
     char filename[MAX_PATH_LENGTH];
@@ -2085,8 +2086,13 @@ void parse_command(const char *buffer, int forward) {
             add_message("Invalid time value. The time cannot be negative.");
         }
     }
-    
-    else if (strcmp(buffer, "/copy") == 0) {
+    else if (sscanf(buffer, "/version", &current == 1)) {
+        if (current >= 1.132)
+            add_message("Build number: 2.24.2025.121.89/S. Current version is v1.1.32, codename Sketchy Slopes (SP1).");
+    } else {
+	add_message("Build number: 2.24.2025.121.89/S. Current version is v1.1.32, codename Sketchy Slopes (SP1).");
+    }
+    if (strcmp(buffer, "/copy") == 0) {
         copy();
     }
     else if (strcmp(buffer, "/paste") == 0) {
@@ -2386,7 +2392,7 @@ void create_window() {
         window_height = modes[mode_count - 1].height;
     }
     g->window = glfwCreateWindow(
-        window_width, window_height, "Stormcraft v1.10", monitor, NULL);
+        window_width, window_height, "Stormcraft v1.1.32", monitor, NULL);
 }
 
 void handle_mouse_input() {
@@ -2627,15 +2633,56 @@ void play_background_music(const char *filename) {
     }
 }
 
-void cleanup_audio() {
-    Mix_CloseAudio();
-    SDL_Quit();
-}
+void play_song() {
+    static Mix_Music *music = NULL;
+    static const char *songs[] = {
+        "AssetsNT/Music/Key.mp3",
+        "AssetsNT/Music/Hover.mp3",
+        "AssetsNT/Music/MiceonVenus.mp3",
+	"AssetsNT/Music/Ki.mp3"
+    };
+    static const int num_songs = sizeof(songs) / sizeof(songs[0]);
 
+    // Initialize SDL audio
+    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+        printf("SDL_Init Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("Mix_OpenAudio Error: %s\n", Mix_GetError());
+        exit(1);
+    }
+
+    Mix_Init(MIX_INIT_MP3);
+    
+    // Function to play a new random song after the current one ends
+    void music_finished() {
+        if (music != NULL) {
+            Mix_FreeMusic(music);
+        }
+
+        int random_index = rand() % num_songs;
+        music = Mix_LoadMUS(songs[random_index]);
+
+        if (!music) {
+            printf("Mix_LoadMUS Error: %s\n", Mix_GetError());
+            return;
+        }
+
+        printf("Now playing: %s\n", songs[random_index]);
+        Mix_PlayMusic(music, 1);  // Play once, callback will handle next song
+    }
+
+    Mix_HookMusicFinished(music_finished);  // Set callback function
+
+    srand(time(NULL));  // Seed random generator
+    music_finished();   // Start first song
+}
 int main(int argc, char **argv) {
     // INITIALIZATION // 
     init_audio();
-    play_background_music("AssetsNT/Music/Key.mp3");
+    play_song();
     curl_global_init(CURL_GLOBAL_DEFAULT);
     srand(time(NULL));
     rand();
@@ -2649,6 +2696,7 @@ int main(int argc, char **argv) {
         glfwTerminate();
         return -1;
     }
+
 
     glfwMakeContextCurrent(g->window);
     glfwSwapInterval(VSYNC);
@@ -2822,7 +2870,6 @@ int main(int argc, char **argv) {
             s->y = highest_block(s->x, s->z) + 2;
         }
 
-        // BEGIN MAIN LOOP //
         double previous = glfwGetTime();
         while (1) {
             // WINDOW SIZE AND SCALE //
@@ -3012,3 +3059,4 @@ int main(int argc, char **argv) {
     curl_global_cleanup();
     return 0;
 }
+
