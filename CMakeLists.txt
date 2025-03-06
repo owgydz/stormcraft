@@ -5,7 +5,7 @@ project(stormcraft)
 FILE(GLOB SOURCE_FILES Source/*.c)
 
 add_executable(
-    Stormcraft
+    craft
     ${SOURCE_FILES}
     Deps/glew/src/glew.c
     Deps/lodepng/lodepng.c
